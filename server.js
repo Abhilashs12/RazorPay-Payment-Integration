@@ -7,23 +7,27 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
+// TODO: replace with your real Razorpay keys
 const razorpay = new Razorpay({
     key_id: "YOUR_KEY_ID",
-    key_secret: "YOUR_KEY_SECRET",
+    key_secret: "YOUR_KEY_SECRET"
 });
 
 app.post("/create-order", async (req, res) => {
+    const { amount } = req.body; // amount in rupees
+
     const options = {
-        amount: req.body.amount * 100,
+        amount: amount * 100, // convert to paise
         currency: "INR",
-        receipt: "order_rcptid_11"
+        receipt: "order_rcptid_" + Date.now()
     };
 
     try {
         const order = await razorpay.orders.create(options);
-        res.json(order);
+        return res.json(order);
     } catch (error) {
-        res.status(500).send(error);
+        console.error("Error creating Razorpay order:", error);
+        return res.status(500).json({ error: "Something went wrong" });
     }
 });
 
