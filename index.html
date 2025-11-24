@@ -2,38 +2,57 @@
 <html>
 <head>
     <title>RazorPay Payment</title>
+    <meta charset="UTF-8">
 </head>
 <body>
-<h2>Make a Payment</h2>
+<h2>RazorPay Payment Demo</h2>
 
+<label>Amount (₹):</label>
+<input type="number" id="amount" value="500" />
 <button id="payBtn">Pay Now</button>
 
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>
 document.getElementById("payBtn").onclick = async function () {
+    const amountInput = document.getElementById("amount");
+    const amount = parseInt(amountInput.value || "0", 10);
+
+    if (!amount || amount <= 0) {
+        alert("Enter a valid amount");
+        return;
+    }
 
     const response = await fetch("http://localhost:5000/create-order", {
         method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({ amount: 500 })
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount })
     });
 
     const order = await response.json();
 
-    var options = {
-        "key": "YOUR_KEY_ID",
-        "amount": order.amount,
-        "currency": "INR",
-        "name": "Payment Demo",
-        "description": "Test Transaction",
-        "order_id": order.id,
-        "handler": function (paymentResult) {
-            alert("Payment Successful!");
-            console.log(paymentResult);
+    if (!order || !order.id) {
+        alert("Error creating order");
+        console.log(order);
+        return;
+    }
+
+    const options = {
+        key: "YOUR_KEY_ID", // same key_id as in backend
+        amount: order.amount,
+        currency: order.currency,
+        name: "Payment Demo",
+        description: "Test Transaction",
+        order_id: order.id,
+        handler: function (response) {
+            alert("Payment Successful!\nPayment ID: " + response.razorpay_payment_id);
+            console.log("Payment success:", response);
+        },
+        theme: {
+            color: "#3399cc"
         }
     };
 
-    var rzp = new Razorpay(options);
+    const rzp = new Razorpay(options);
     rzp.open();
 };
 </script>
